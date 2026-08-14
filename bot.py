@@ -2,24 +2,22 @@ import os
 import requests
 from flask import Flask, request
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.ext import Application, MessageHandler, filters
 
 # ======== CONFIG ========
-
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = "nousresearch/hermes-3-llama-3.1-70b"
 
-
-RENDER_EXTERNAL_URL = os.getenv("RENDER_EXTERNAL_URL", "")
 PORT = int(os.environ.get("PORT", 8443))
+RENDER_URL = os.getenv("RENDER_EXTERNAL_URL", "https://hermes-bot-1ox1.onrender.com")
 # =========================
 
 app = Flask(__name__)
 
-
+# إعداد بوت تيليجرام
 telegram_app = Application.builder().token(TELEGRAM_TOKEN).build()
 
 async def handle_message(update: Update, context):
@@ -34,70 +32,52 @@ async def handle_message(update: Update, context):
     }
     
     try:
-        response = requests.post(OPENROUTER_URL, headers=headers, json=data)
+        response = requests.post(OPENROUTER_URL, headers=headers, json=data, timeout=30)
         print("OpenRouter Status:", response.status_code)
-        print("OpenRouter Response:", response.text)
         
-        response.raise_for_status()
-        res_json = response.json()
-        
-        if "choices" in res_json and len(res_json["choices"]) > 0:
-            ai_reply = res_json["choices"][0]["message"]["content"]
+        # التحقق مما إذا كانت الاستجابة بصيغة JSON سليمة قبل تحليلها
+        if response.status_code != 200:
+            ai_reply = f"Error: OpenRouter returned status {response.status_code}: {response.text[:200]}"
         else:
-            ai_reply = f"Error: Unexpected response structure: {res_json}"
-            
+            try:
+                res_json = response.json()
+                if "choices" in res_json and len(res_json["choices"]) > 0:
+                    ai_reply = res_json["choices"][0]["message"]["content"]
+                else:
+                    ai_reply = f"Error: Unexpected response structure: {res_json}"
+            except json.JSONDecodeError:
+                ai_reply = f"Error: Failed to parse JSON from OpenRouter. Response text: {response.text[:200]}"
+                
     except Exception as e:
         ai_reply = f"Sorry, I ran into an error: {e}"
         
     await update.message.reply_text(ai_reply)
-    
 
 telegram_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
 @app.route(f"/{TELEGRAM_TOKEN}", methods=["POST"])
 def webhook():
-   
-    update = Update.de_json(request.get_json(force=True), telegram_app.bot)
-
-    import asyncio
-    asyncio.run(telegram_app.initialize())
-    asyncio.run(telegram_app.process_update(update))
-    return "OK", 200
+    if request.method == "POST":
+        import asyncio
+        update = Update.de_json(request.get_json(force=True), telegram_app.bot)
+        
+        async def process():
+            await telegram_app.initialize()
+            await telegram_app.process_update(update)
+            
+        asyncio.run(process())
+        return "OK", 200
 
 @app.route("/")
 def index():
     return "Bot is running on Render!"
 
 if __name__ == "__main__":
-
-    RENDER_URL = "https://hermes-bot-1ox1.onrender.com" 
-    webhook_url = f"{RENDER_URL}/{TELEGRAM_TOKEN}"
+    # تعيين الـ Webhook تلقائياً عند بدء التشغيل
+    if RENDER_URL:
+        webhook_url = f"{RENDER_URL}/{TELEGRAM_TOKEN}"
+        requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={webhook_url}")
+        print("Webhook set to:", webhook_url)
     
-
-    response = requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={webhook_url}")
-    print("Set Webhook Response:", response.text)
-    
-   
+    # تشغيل سيرفر Flask بمدخل واحد رسمي يدعمه Render
     app.run(host="0.0.0.0", port=PORT)
-
-import os
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import threading
-
-class HealthCheckHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"Bot is running!")
-        
-    def log_message(self, format, *args):
-        return
-
-def run_health_server():
-    port = int(os.environ.get("PORT", 10000))
-    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
-    server.serve_forever()
-
-
-threading.Thread(target=run_health_server, daemon=True).start()
-
