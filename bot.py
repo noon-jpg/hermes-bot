@@ -37,21 +37,21 @@ async def handle_message(update: Update, context):
         "messages": [{"role": "user", "content": user_text}]
     }
 
-   try:
-    response = requests.post(OPENROUTER_URL, headers=headers, json=data)
-    
-
-   print("OpenRouter Status:", response.status_code)
-   print("OpenRouter Response:", response.text)
-    
-    response.raise_for_status()
-    res_json = response.json()
-    
-    if "choices" in res_json and len(res_json["choices"]) > 0:
-        ai_reply = res_json["choices"][0]["message"]["content"]
-    else:
-      ai_reply = f"Error: Unexpected response structure: {res_json}"
-
+try:
+        response = requests.post(OPENROUTER_URL, headers=headers, json=data)
+        print("OpenRouter Status:", response.status_code)
+        print("OpenRouter Response:", response.text)
+        response.raise_for_status()
+        res_json = response.json()
+        
+        if "choices" in res_json and len(res_json["choices"]) > 0:
+            ai_reply = res_json["choices"][0]["message"]["content"]
+        else:
+            ai_reply = f"Error: Unexpected response structure: {res_json}"
+            
+    except Exception as e:
+        ai_reply = f"Sorry, I ran into an error: {e}"  
+  
 except Exception as e:
   ai_reply = f"Sorry, I ran into an error: {e}"
 
