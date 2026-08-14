@@ -37,15 +37,23 @@ async def handle_message(update: Update, context):
         "messages": [{"role": "user", "content": user_text}]
     }
 
-    try:
-        response = requests.post(OPENROUTER_URL, headers=headers, json=data)
-        response.raise_for_status()
-        ai_reply = response.json()["choices"][0]["message"]["content"]
-    except Exception as e:
-        ai_reply = f"Sorry, I ran into an error: {e}"
+   try:
+    response = requests.post(OPENROUTER_URL, headers=headers, json=data)
+    
+    # طباعة الرد في السجلات لنرى ماذا أرسل OpenRouter بالضبط في حال حدث خطأ
+    print("OpenRouter Status:", response.status_code)
+    print("OpenRouter Response:", response.text)
+    
+    response.raise_for_status()
+    res_json = response.json()
+    
+    if "choices" in res_json and len(res_json["choices"]) > 0:
+        ai_reply = res_json["choices"][0]["message"]["content"]
+    else:
+      ai_reply = f"Error: Unexpected response structure: {res_json}"
 
-    await update.message.reply_text(ai_reply)
-
+except Exception as e:
+  ai_reply = f"Sorry, I ran into an error: {e}"
 # تسجيل الأوامر
 telegram_app.add_handler(CommandHandler("start", start))
 telegram_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
