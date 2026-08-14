@@ -22,12 +22,8 @@ app = Flask(__name__)
 
 telegram_app = Application.builder().token(TELEGRAM_TOKEN).build()
 
-async def start(update: Update, context):
-    await update.message.reply_text("Hi! I'm Hermes 3 on Telegram. Ask me anything.")
-
 async def handle_message(update: Update, context):
     user_text = update.message.text
-
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json"
@@ -36,11 +32,12 @@ async def handle_message(update: Update, context):
         "model": MODEL,
         "messages": [{"role": "user", "content": user_text}]
     }
-
-try:
+    
+    try:
         response = requests.post(OPENROUTER_URL, headers=headers, json=data)
         print("OpenRouter Status:", response.status_code)
         print("OpenRouter Response:", response.text)
+        
         response.raise_for_status()
         res_json = response.json()
         
@@ -50,11 +47,10 @@ try:
             ai_reply = f"Error: Unexpected response structure: {res_json}"
             
     except Exception as e:
-        ai_reply = f"Sorry, I ran into an error: {e}"  
-  
-except Exception as e:
-  ai_reply = f"Sorry, I ran into an error: {e}"
-
+        ai_reply = f"Sorry, I ran into an error: {e}"
+        
+    await update.message.reply_text(ai_reply)
+    
 telegram_app.add_handler(CommandHandler("start", start))
 telegram_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
