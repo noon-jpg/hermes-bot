@@ -78,11 +78,11 @@ def index():
     return "Bot is running on Render!"
 
 if __name__ == "__main__":
-    # تعيين الـ Webhook تلقائياً عند بدء التشغيل
+    #  
     if RENDER_URL:
         webhook_url = f"{RENDER_URL}/{TELEGRAM_TOKEN}"
-        requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={webhook_url}")
+        #requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={webhook_url}")
         print("Webhook set to:", webhook_url)
     
-    # تشغيل سيرفر Flask بمدخل واحد رسمي يدعمه Render
+    # 
     app.run(host="0.0.0.0", port=PORT)
