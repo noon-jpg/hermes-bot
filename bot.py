@@ -73,9 +73,30 @@ if __name__ == "__main__":
     RENDER_URL = "https://hermes-bot-1ox1.onrender.com" 
     webhook_url = f"{RENDER_URL}/{TELEGRAM_TOKEN}"
     
-    # إرسال طلب تفعيل الـ Webhook إلى تيليجرام
+
     response = requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={webhook_url}")
     print("Set Webhook Response:", response.text)
     
-    # تشغيل السيرفر
+   
     app.run(host="0.0.0.0", port=PORT)
+
+import os
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import threading
+
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is running!")
+        
+    def log_message(self, format, *args):
+        return
+
+def run_health_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
+    server.serve_forever()
+
+
+threading.Thread(target=run_health_server, daemon=True).start()
