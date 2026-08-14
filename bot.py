@@ -6,8 +6,8 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
 # ======== CONFIG ========
 # ستاخذ البيانات من إعدادات السحابة تلقائياً أو يمكنك وضعها هنا مباشرة
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "8932941630:AAGy59uZE3RpnXoez5_frs3xmFaWo84kg24")
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "YOUR_OPENROUTER_API_KEY")
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = "nousresearch/hermes-3-llama-3.1-70b"
