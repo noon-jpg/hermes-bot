@@ -51,7 +51,7 @@ async def handle_message(update: Update, context):
         
     await update.message.reply_text(ai_reply)
     
-telegram_app.add_handler(CommandHandler("start", start))
+
 telegram_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
 @app.route(f"/{TELEGRAM_TOKEN}", methods=["POST"])
@@ -100,3 +100,4 @@ def run_health_server():
 
 
 threading.Thread(target=run_health_server, daemon=True).start()
+
