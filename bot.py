@@ -65,9 +65,13 @@ def index():
     return "Bot is running on Render!"
 
 if __name__ == "__main__":
-    # إعداد الـ Webhook تلقائياً عند تشغيل السيرفر
-    if RENDER_EXTERNAL_URL:
-        webhook_url = f"{RENDER_EXTERNAL_URL}/{TELEGRAM_TOKEN}"
-        requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={webhook_url}")
+    # ضع رابط موقعك الثابت الذي يظهر في لوحة تحكم Render هنا مباشرة
+    RENDER_URL = "https://hermes-bot-1ox1.onrender.com" 
+    webhook_url = f"{RENDER_URL}/{TELEGRAM_TOKEN}"
     
+    # إرسال طلب تفعيل الـ Webhook إلى تيليجرام
+    response = requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={webhook_url}")
+    print("Set Webhook Response:", response.text)
+    
+    # تشغيل السيرفر
     app.run(host="0.0.0.0", port=PORT)
