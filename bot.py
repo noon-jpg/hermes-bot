@@ -22,7 +22,7 @@ RENDER_URL = os.getenv("RENDER_EXTERNAL_URL", "https://hermes-bot-1ox1.onrender.
 
 app = Flask(__name__)
 
-# إعداد بوت تيليجرام
+
 telegram_app = Application.builder().token(TELEGRAM_TOKEN).build()
 
 async def handle_message(update: Update, context):
@@ -31,16 +31,18 @@ async def handle_message(update: Update, context):
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json"
     }
+    
+   
     data = {
         "model": MODEL,
-        "messages": [{"role": "user", "content": user_text}]
+        "messages": [{"role": "user", "content": user_text}],
+        "max_tokens": 1000 
     }
-    
+   
     try:
         response = requests.post(OPENROUTER_URL, headers=headers, json=data, timeout=30)
-        print("OpenRouter Status:", response.status_code)
+       
         
-        # التحقق مما إذا كانت الاستجابة بصيغة JSON سليمة قبل تحليلها
         if response.status_code != 200:
             ai_reply = f"Error: OpenRouter returned status {response.status_code}: {response.text[:200]}"
         else:
