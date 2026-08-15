@@ -80,11 +80,10 @@ def index():
     return "Bot is running on Render!"
 
 if __name__ == "__main__":
-    #  
     if RENDER_URL:
         webhook_url = f"{RENDER_URL}/{TELEGRAM_TOKEN}"
-        #requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={webhook_url}")
+       
+        requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={webhook_url}")
         print("Webhook set to:", webhook_url)
     
-    # 
     app.run(host="0.0.0.0", port=PORT)
