@@ -1,6 +1,7 @@
 import os
 import logging
 import json
+import asyncio
 import requests
 from flask import Flask, request
 from telegram import Update
@@ -48,7 +49,6 @@ async def handle_message(update: Update, context):
     }
    
     try:
-        # Requests is blocking, but contained safely within the async handler
         response = requests.post(OPENROUTER_URL, headers=headers, json=data, timeout=30)
         
         if response.status_code != 200:
@@ -72,14 +72,13 @@ async def handle_message(update: Update, context):
         
     await update.message.reply_text(ai_reply)
 
-# Register message handler (ignoring commands for now)
+# Register message handler
 telegram_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
 @app.route(f"/{TELEGRAM_TOKEN}", methods=["POST"])
 def webhook():
     """Endpoint that Telegram calls when a new message arrives."""
     if request.method == "POST":
-        import asyncio
         try:
             json_data = request.get_json(force=True)
             logger.info("Incoming webhook update received.")
@@ -89,7 +88,8 @@ def webhook():
                 await telegram_app.initialize()
                 await telegram_app.process_update(update)
                 
-            async asyncio.run(process())
+            # تشغيل الحدث بشكل صحيح داخل Flask
+            asyncio.run(process())
         except Exception as e:
             logger.exception(f"Error processing webhook update: {e}")
             return "Internal Server Error", 500
@@ -114,3 +114,4 @@ if __name__ == "__main__":
         logger.warning("RENDER_EXTERNAL_URL not found. Webhook auto-setup skipped.")
     
     app.run(host="0.0.0.0", port=PORT)
+    
